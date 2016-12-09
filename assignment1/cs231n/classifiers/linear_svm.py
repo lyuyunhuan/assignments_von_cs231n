@@ -106,10 +106,17 @@ def svm_loss_vectorized(W, X, y, reg):
   #scores1D = y[index1D]
  
   scores2D = np.dot(X,W)  
-  for i in xrange(num_train):
-    scores1D[i,0]=scores2D[i,y[i]]-1            #find the correct scores and fill them into scores1D, the value -1 is because: si-sj+1
-    scores2D[i,y[i]]-=1                         # we want at corrected score voxel, the value should be 0, correct score -1 - 
-                                                #(correct     score -1) = 0
+ ##for i in xrange(num_train):
+  ##  scores1D[i,0]=scores2D[i,y[i]]-1            #find the correct scores and fill them into scores1D, the value -1 is because: si-sj+1
+  ##  scores2D[i,y[i]]-=1                         # we want at corrected score voxel, the value should be 0, correct score -1 - 
+                                                  #(correct     score -1) = 0
+  #####################################
+  #for loop replacement###
+  indexInsert = np.arange(num_train)
+  scores1D[indexInsert,0] = scores2D[indexInsert,y[indexInsert]] -1  #using array indexing
+  scores2D[indexInsert,y[indexInsert]] -=1
+    
+  #####################################  
     
   #scores2D = X.dot(W)
   #http://stackoverflow.com/questions/9497290/how-would-i-sum-a-multi-dimensional-array-in-the-most-succinct-python
