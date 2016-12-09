@@ -49,7 +49,11 @@ class LinearClassifier(object):
       # Hint: Use np.random.choice to generate indices. Sampling with         #
       # replacement is faster than sampling without replacement.              #
       #########################################################################
-      pass
+     
+      indexArr = np.random.choice(num_train, batch_size, replace=False)  #randomly select training data we want to use
+      X_batch = X[[indexArr]][:]
+      y_batch = y[[indexArr]]
+      #pass
       #########################################################################
       #                       END OF YOUR CODE                                #
       #########################################################################
@@ -63,7 +67,10 @@ class LinearClassifier(object):
       # TODO:                                                                 #
       # Update the weights using the gradient and the learning rate.          #
       #########################################################################
-      pass
+      
+      self.W-=grad*loss*1e-8                                              #upgrade the WEIGHT, here I didn't use "learning rate" to avoid 
+                                                                          #NaN, it shall have something wrong here, check later.
+      #pass
       #########################################################################
       #                       END OF YOUR CODE                                #
       #########################################################################
@@ -86,12 +93,25 @@ class LinearClassifier(object):
       array of length N, and each element is an integer giving the predicted
       class.
     """
-    y_pred = np.zeros(X.shape[1])
+    y_pred = np.zeros(X.shape[0])
+    print X.shape[0]                                 #this is just for checking the dimension of X, and I suspect the real
+                                                     #X dimension is differ from which was written on the input:D*N, it should be N*D
+    maxValues = np.zeros(X.shape[0])
+    Forward = (self.W.T).dot(X.T)                    #calculate the scores
+    #Forward = X.dot(self.W)
+    #http://stackoverflow.com/questions/35966940/finding-the-max-of-a-column-in-an-array
+    maxValues = np.max(Forward,axis=0)               #find all the max-value in each column
     ###########################################################################
     # TODO:                                                                   #
     # Implement this method. Store the predicted labels in y_pred.            #
     ###########################################################################
-    pass
+    for i in xrange(X.shape[0]):
+        for j in xrange(self.W.shape[1]):            #iterate in each column, if the value of an element maches the max value, fill the
+                                                     #index to y_pred
+            if Forward[j,i] == maxValues[i]:
+                y_pred[i]=j
+    #y_pred[np.arange(X.shape[0])] = Forward[:][np.arange(X.shape[0])].index(maxValues[np.arange(X.shape[0])])
+    #pass
     ###########################################################################
     #                           END OF YOUR CODE                              #
     ###########################################################################
@@ -112,8 +132,8 @@ class LinearClassifier(object):
     - loss as a single float
     - gradient with respect to self.W; an array of the same shape as W
     """
-    pass
-
+    #pass
+    return svm_loss_vectorized(self.W, X_batch, y_batch, reg) # utilize the svm_loss_vectorized function to return the loss and gradient
 
 class LinearSVM(LinearClassifier):
   """ A subclass that uses the Multiclass SVM loss function """
@@ -127,4 +147,3 @@ class Softmax(LinearClassifier):
 
   def loss(self, X_batch, y_batch, reg):
     return softmax_loss_vectorized(self.W, X_batch, y_batch, reg)
-
