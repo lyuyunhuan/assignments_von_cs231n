@@ -151,11 +151,13 @@ def svm_loss_vectorized(W, X, y, reg):
   #tempBool = np.divide(temp, temp)
   #tempBool = tempBool.clip(max=1,min=0)
   #http://stackoverflow.com/questions/19666626/replace-all-elements-of-python-numpy-array-that-are-greater-than-some-value
-  tempBool = np.copy(temp)
-  tempBool[tempBool>0] = 1
+  tempBool = np.copy(temp)                   #  temp = scores2D-scores1D ,  temp= temp.clip(min=0)
+                                             #  temp is already the every score minus the correct labeled score
+  tempBool[tempBool>0] = 1                   # for every element, when it is positive, set it to one (for weighting)
   for j in xrange(num_train):
-    tempBool[j,y[j]] =-1*sum(tempBool[j,:])
-    dW += np.reshape (X[j,:],(X.shape[1],1))*tempBool[j,:] 
+    tempBool[j,y[j]] =-1*sum(tempBool[j,:])  # calculate how many final scores, max(~~,0) are more than 0, add the number to the correct
+                                             # label element, because it is the times that the corrected scores be used
+    dW += np.reshape (X[j,:],(X.shape[1],1))*tempBool[j,:]   # broadcasting, out-product
   #pass
   #############################################################################
   #                             END OF YOUR CODE                              #
