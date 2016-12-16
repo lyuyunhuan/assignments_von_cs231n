@@ -66,9 +66,11 @@ class TwoLayerNet(object):
     W1, b1 = self.params['W1'], self.params['b1']
     W2, b2 = self.params['W2'], self.params['b2']
     N, D = X.shape
-
+    
+    h1 = np.maximum ( 0, X.dot(W1) + b1)             #simply using np.maximum to eliminate negative values in hidden layer 1
+    scores = h1.dot(W2) + b2                         # note that: scores are not the values pass softMax, they are data vor the softMax
     # Compute the forward pass
-    scores = None
+    #scores = None
     #############################################################################
     # TODO: Perform the forward pass, computing the class scores for the input. #
     # Store the result in the scores variable, which should be an array of      #
@@ -84,7 +86,20 @@ class TwoLayerNet(object):
       return scores
 
     # Compute the loss
-    loss = None
+    
+    score1 = np.exp(scores)                           # these steps are softMax
+    score2 = np.sum(score1, axis = 1)
+    score2 = np.reshape(score2, (5,1))
+    score3 = score1 / score2
+    
+    loss = 0
+    for i in xrange(N):                               # add loss values from each sample, don't forget to divide with num_train
+        loss += -np.log(score3[i,y[i]])/N
+ 
+    #loss += sum (sum(W2.dot(W2.T))) * reg *0.5
+    loss += sum( sum(W2**2) ) * reg *0.5              # regularization 2, note that: L2 required for each single WEIGHTS
+    loss += sum( sum(W1**2) ) * reg *0.5
+    print loss
     #############################################################################
     # TODO: Finish the forward pass, and compute the loss. This should include  #
     # both the data loss and L2 regularization for W1 and W2. Store the result  #
