@@ -92,7 +92,7 @@ class TwoLayerNet(object):
     
     score1 = np.exp(scores)                           # these steps are softMax
     score2 = np.sum(score1, axis = 1)
-    score2 = np.reshape(score2, (5,1))
+    score2 = np.reshape(score2, (N,1))
     score3 = score1 / score2
     
     loss = 0
@@ -199,7 +199,7 @@ class TwoLayerNet(object):
     iterations_per_epoch = max(num_train / batch_size, 1)
 
     # Use SGD to optimize the parameters in self.model
-    loss_history = []
+    loss_history = []         
     train_acc_history = []
     val_acc_history = []
 
@@ -211,14 +211,19 @@ class TwoLayerNet(object):
       # TODO: Create a random minibatch of training data and labels, storing  #
       # them in X_batch and y_batch respectively.                             #
       #########################################################################
-      pass
+      
+      indexArr = np.random.choice(num_train, batch_size, replace=True)
+      X_batch = X[[indexArr]][:]
+      y_batch = y[[indexArr]]
+    
+      #pass
       #########################################################################
       #                             END OF YOUR CODE                          #
       #########################################################################
 
       # Compute loss and gradients using the current minibatch
-      loss, grads = self.loss(X_batch, y=y_batch, reg=reg)
-      loss_history.append(loss)
+      loss, grads = self.loss(X_batch, y=y_batch, reg=reg)                    # throw batches to the loss function to obtain the loss 
+      loss_history.append(loss)                                               # and the gradients of Ws, and bs
 
       #########################################################################
       # TODO: Use the gradients in the grads dictionary to update the         #
@@ -226,12 +231,17 @@ class TwoLayerNet(object):
       # using stochastic gradient descent. You'll need to use the gradients   #
       # stored in the grads dictionary defined above.                         #
       #########################################################################
-      pass
+      
+      self.params['W1'] -= 1e-0* grads['W1'] * loss * learning_rate           # use the obtained gradients to up date Ws, and bs
+      self.params['W2'] -= 1e-0* grads['W2'] * loss * learning_rate           # at first I thought that the updating rate should be
+      self.params['b1'] -= 1e-0* grads['b1'] * loss * learning_rate           # multiplied by std(see _init_ part), but I was wrong
+      self.params['b2'] -= 1e-0* grads['b2'] * loss * learning_rate           # I also find out that when the update rate is too small
+      #pass                                                                   # the loss scores are just ocsilate, not decay
       #########################################################################
       #                             END OF YOUR CODE                          #
       #########################################################################
 
-      if verbose and it % 100 == 0:
+      if verbose and it % 100 == 0:                                           # it stands for which iteration is right now
         print 'iteration %d / %d: loss %f' % (it, num_iters, loss)
 
       # Every epoch, check train and val accuracy and decay learning rate.
@@ -239,11 +249,11 @@ class TwoLayerNet(object):
         # Check accuracy
         train_acc = (self.predict(X_batch) == y_batch).mean()
         val_acc = (self.predict(X_val) == y_val).mean()
-        train_acc_history.append(train_acc)
+        train_acc_history.append(train_acc)                                   # put accuracy data into history
         val_acc_history.append(val_acc)
 
         # Decay learning rate
-        learning_rate *= learning_rate_decay
+        learning_rate *= learning_rate_decay                                  # decay learning rate after each epoch
 
     return {
       'loss_history': loss_history,
@@ -266,12 +276,24 @@ class TwoLayerNet(object):
       the elements of X. For all i, y_pred[i] = c means that X[i] is predicted
       to have class c, where 0 <= c < C.
     """
-    y_pred = None
-
+    y_pred = None                                                             # just initializing
+    W1, b1 = self.params['W1'], self.params['b1']
+    W2, b2 = self.params['W2'], self.params['b2']
+    N, D = X.shape
+    H, C = W2.shape
     ###########################################################################
     # TODO: Implement this function; it should be VERY simple!                #
     ###########################################################################
-    pass
+    hl = np.maximum ( 0, X.dot(W1) + b1.T) 
+    scores = hl.dot(W2) + b2.T
+    score1 = np.exp(scores)                                                   # these steps are softMax
+    score2 = np.sum(score1, axis = 1)
+    score2 = np.reshape(score2, (N,1))
+    score3 = score1 / score2
+    
+    y_pred = np.argmax(score3, axis=1)                                        # return the label of correct class for each Sample
+    
+    #pass
     ###########################################################################
     #                              END OF YOUR CODE                           #
     ###########################################################################
