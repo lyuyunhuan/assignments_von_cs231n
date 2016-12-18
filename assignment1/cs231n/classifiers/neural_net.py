@@ -66,9 +66,12 @@ class TwoLayerNet(object):
     W1, b1 = self.params['W1'], self.params['b1']
     W2, b2 = self.params['W2'], self.params['b2']
     N, D = X.shape
+    H, C = W2.shape
     
-    h1 = np.maximum ( 0, X.dot(W1) + b1)             #simply using np.maximum to eliminate negative values in hidden layer 1
-    scores = h1.dot(W2) + b2                         # note that: scores are not the values pass softMax, they are data vor the softMax
+    h1 = np.maximum ( 0, X.dot(W1) + b1.T)             #simply using np.maximum to eliminate negative values in hidden layer 1
+    scores = h1.dot(W2) + b2.T                         # note that: scores are not the values pass softMax, they are data vor the softMax
+    #print h1
+    #print scores
     # Compute the forward pass
     #scores = None
     #############################################################################
@@ -99,7 +102,7 @@ class TwoLayerNet(object):
     #loss += sum (sum(W2.dot(W2.T))) * reg *0.5
     loss += sum( sum(W2**2) ) * reg *0.5              # regularization 2, note that: L2 required for each single WEIGHTS
     loss += sum( sum(W1**2) ) * reg *0.5
-    print loss
+    #print loss
     #############################################################################
     # TODO: Finish the forward pass, and compute the loss. This should include  #
     # both the data loss and L2 regularization for W1 and W2. Store the result  #
@@ -114,6 +117,51 @@ class TwoLayerNet(object):
 
     # Backward pass: compute gradients
     grads = {}
+    
+    dW2 = np.zeros_like(W2)
+    db2 = np.zeros_like(b2)
+    dW1 = np.zeros_like(W1)
+    db1 = np.zeros_like(b1)
+    dh1 = np.zeros_like(h1)
+    
+    #print db1
+    
+    for i in xrange(N):                                  # this for loop is for the second layer derivative calculation: dW2 and db2
+         for j in xrange(C):                             # the whole process could reference the one-layer softMax net that I generated
+                 if j == y[i]:                           # earlier.
+                        dW2[:,j] -= (h1[i,:].T)          # the biggest difference is that the dscore3 matrix affect both dW2 and db2 in the 
+                        db2[j] -= 1                      # same way!!!
+                 dW2[:,j] += (h1[i,:].T) * score3[i,j]
+                 db2[j] += 1 * score3[i,j]
+    
+    #db2 = np.sum(scores,axis=0)
+    
+    h1Bool = np.copy(h1)                                 # h1Bool is used to backward compansate the Relu activation function, 
+    h1Bool[h1Bool > 0] = 1                               # all positive are set to one, and zeros remain zero
+    
+    dscore3 = score3                                     # dscore3 is to visualize the dscore which I already use for convinience 
+    for i in xrange(N):                                  # dscore3 is the backward compansate the softMax activation function
+        dscore3[i,y[i]]-=1
+    
+    for i in xrange(N):                                  # dh1 in layer one is wie the dscore3 in layer two, 
+        dh1[i,:] = dscore3[i,:].dot(W2.T) * h1Bool[i,:]  # to calcuate dh1, we need to go through backward through, dscore3, W2 and 
+    #print h1Bool                                        # h1Bool
+    
+    for i in xrange(N):                                  # after we have generate the dh1, the calculation of the dW1 in the two layer net
+         dW1 += np.tile(X[i,:], (H,1)).T * dh1[i,:]      # could be simplified as a single layer net
+    
+    db1 = np.sum(dh1, axis=0)                            # due to the X for db1 is always one, db1 is the sum of the dh1 along the axis=0
+    #print db1
+    
+    dW1/= N                                              # don't forget divided by the train_num
+    dW2/= N
+    db1/= N
+    db2/= N
+    
+    dW1 += reg*W1                                        # and don't forget the regularization part
+    dW2 += reg*W2
+    
+    grads = {'W1':dW1, 'W2':dW2, 'b1':db1, 'b2':db2}
     #############################################################################
     # TODO: Compute the backward pass, computing the derivatives of the weights #
     # and biases. Store the results in the grads dictionary. For example,       #
